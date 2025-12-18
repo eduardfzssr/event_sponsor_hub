@@ -373,7 +373,7 @@ export default function EventsPage() {
                           )}
                         </div>
                         <Link
-                          href={`/events/${event.slug || event.id}`}
+                          href={`/events/${event.id}`}
                           className="text-lg font-bold text-foreground group-hover:text-primary transition block"
                         >
                           {event.name}
@@ -460,7 +460,7 @@ export default function EventsPage() {
                             )}
                           </div>
                           <Link
-                            href={`/events/${event.slug || event.id}`}
+                            href={`/events/${event.id}`}
                             className="text-primary hover:text-primary/80 transition"
                           >
                             <ArrowRight className="w-4 h-4" />
@@ -472,7 +472,7 @@ export default function EventsPage() {
                       {!user && (
                         <div className="flex items-center justify-end text-sm pt-2 border-t border-border">
                           <Link
-                            href={`/events/${event.slug || event.id}`}
+                            href={`/events/${event.id}`}
                             className="text-primary hover:text-primary/80 transition flex items-center gap-1"
                           >
                             View Details

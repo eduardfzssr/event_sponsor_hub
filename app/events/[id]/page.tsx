@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -18,10 +18,14 @@ import {
   ChevronRight,
   Lock,
   Phone,
-  BarChart3
+  BarChart3,
+  Loader2,
+  AlertCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getCurrentUser, signOut } from "@/lib/auth"
+import { createClient } from "@/lib/supabase/client"
+import type { Event, Review as ReviewType } from "@/lib/database/types"
 
 interface Review {
   id: string
@@ -39,27 +43,67 @@ interface Review {
   verified: boolean
 }
 
-export default function EventDetailPage({ params }: { params: { id: string } }) {
+export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
+  const { id: eventId } = use(params)
   const [selectedYear, setSelectedYear] = useState("2025")
   const [activeTab, setActiveTab] = useState("Sponsor Feedback")
   const [sortBy, setSortBy] = useState("Most Relevant")
-  const [user, setUser] = useState<{ fullName: string | null; email: string } | null>(null)
+  const [user, setUser] = useState<{ userId: string; fullName: string | null; email: string } | null>(null)
+  const [event, setEvent] = useState<Event | null>(null)
+  const [userReview, setUserReview] = useState<ReviewType | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    async function checkAuth() {
-      const currentUser = await getCurrentUser()
-      if (currentUser) {
-        setUser({
-          fullName: currentUser.fullName,
-          email: currentUser.email,
-        })
+    async function initialize() {
+      try {
+        const supabase = createClient()
+        
+        // Check authentication
+        const currentUser = await getCurrentUser()
+        if (currentUser) {
+          setUser({
+            userId: currentUser.userId,
+            fullName: currentUser.fullName,
+            email: currentUser.email,
+          })
+
+          // Fetch user's review for this event
+          const { data: reviewData, error: reviewError } = await supabase
+            .from('reviews')
+            .select('*')
+            .eq('event_id', eventId)
+            .eq('user_id', currentUser.userId)
+            .maybeSingle()
+
+          if (!reviewError && reviewData) {
+            setUserReview(reviewData)
+          }
+        }
+
+        // Fetch event data
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('id', eventId)
+          .single()
+
+        if (eventError) {
+          console.error('Error fetching event:', eventError)
+          setError('Event not found')
+        } else {
+          setEvent(eventData)
+        }
+      } catch (err) {
+        console.error('Error initializing:', err)
+        setError('An error occurred while loading the page')
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
-    checkAuth()
-  }, [])
+    initialize()
+  }, [eventId])
 
   const handleSignOut = async () => {
     await signOut()
@@ -67,25 +111,29 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
     router.refresh()
   }
 
-  // Mock event data matching the design
-  const event = {
-    id: params.id,
-    name: "TechInnovate Summit",
-    location: "San Francisco, CA",
-    date: "Oct 12-14, 2026",
-    status: "Confirmed for 2026",
-    bannerImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuBAXSXnG8cu8dVWGBz7t39fDK345vJj9kaDy9L7rV3hWUjaO0LEHF21bc0xgA4xFIy5qKJVtmCxnfwCbBisp1vwkWr0_2xU8CS_V5RFDrPa_dSSNESMm_1RIio4xK1H4-u7fbqyWsIJ_ufttEWL8Qe6CQ7iWbXLjgXtkOQtbs_e40DqN1UViKpaD3WNM1UCA2WykXGG06pY_w4xt7H1BX-23YBb9ZV1eI_l9Nvb7br8xmD6mbG_U80p5lbZL5rQ3EnEsaDyvoqDsmw",
+  // Format event data for display
+  const eventDisplay = event ? {
+    id: event.id,
+    name: event.name,
+    location: event.location || `${event.city || ''}${event.city && event.country ? ', ' : ''}${event.country || ''}`.trim() || 'Location TBD',
+    date: event.start_date && event.end_date
+      ? `${new Date(event.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(event.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+      : event.start_date
+      ? new Date(event.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : 'Date TBD',
+    status: event.status === 'upcoming' ? 'Upcoming' : event.status === 'past' ? 'Past Event' : 'Cancelled',
+    bannerImage: event.thumbnail_url || "https://via.placeholder.com/1200x400",
     venue: {
-      name: "Moscone Center",
-      address: "747 Howard St, San Francisco, CA 94103",
-      mapImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuB2seRowCfYrg4AODEMKMtx1hjuO0cqOSVcztPf3xKNp6S8lpLGqWfNzFbfjcZEVjo5LzWjKF2Gafgn6Unz4BJ8_L7bq5HatwyIbKVbcAtXi7nxzdjP40Vju1DZ6oDtOiuqzmdkMW91MvRoBhdNV-T_l97uu4U7Szm8__T2lVarurrheE2ZOEwaFrR3Mh-4km7vV6MQIbT9r9Ns8X-vo7ckGxrdjlbqStK5Vk40kMVw9eYgoTQ-fdnJtFHEgBnb6cS73kM5a2GgSk4",
+      name: event.venue || 'Venue TBD',
+      address: event.location || 'Address TBD',
+      mapImage: "https://via.placeholder.com/400x200",
     },
     organizer: {
-      name: "Sarah Jenkins",
-      role: "Event Director @ TechEvents",
-      avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuDm_NxIZLcs-Jt_awOKSi2T__EEr8_2LTRUyrItXvjQqhsFoaZS_KS2uso0iqK_DYmKEN3Xason5lmAQAFHLfq-dGBYINwXn03YNpoED3r5tUlwag1wgapLJCI1UYmi1i27AWLNX_VAcPfxCWvt9rUj4wnC-VMSqmxVGdU-IEQDy-dafJWJiOqYidDKtLF15iBGp2gyB3If3NfDQT5wGMAGSwU3arzBsvfbRM60gUeV_rhsq5bbc3X5aVhWeYqhf3xLebwt7hzb_o8",
+      name: event.organizer_name || 'Organizer',
+      role: event.organizer_website ? `Event Organizer` : 'Event Organizer',
+      avatar: "https://via.placeholder.com/56",
     },
-  }
+  } : null
 
   const historicalData = {
     "2025": {
@@ -152,7 +200,25 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !event || !eventDisplay) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-foreground mb-2">Event Not Found</h1>
+          <p className="text-muted-foreground mb-4">{error || "The event you're looking for doesn't exist."}</p>
+          <Button asChild>
+            <Link href="/events">Back to Events</Link>
+          </Button>
+        </div>
       </div>
     )
   }
@@ -200,25 +266,33 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
             <div
               className="flex min-h-[320px] lg:min-h-[400px] flex-col gap-6 bg-cover bg-center bg-no-repeat rounded-xl items-start justify-end px-4 pb-10 lg:px-10 shadow-lg relative overflow-hidden group"
               style={{
-                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.6) 100%), url("${event.bannerImage}")`,
+                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.6) 100%), url("${eventDisplay.bannerImage}")`,
               }}
             >
               <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
-                <span className="text-xs font-bold text-white uppercase tracking-wider">{event.status}</span>
+                <span className="text-xs font-bold text-white uppercase tracking-wider">{eventDisplay.status}</span>
               </div>
               <div className="flex flex-col gap-2 text-left relative z-10">
-                <h1 className="text-white text-3xl font-black leading-tight tracking-[-0.033em] lg:text-5xl drop-shadow-md">
-                  {event.name}
-                </h1>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h1 className="text-white text-3xl font-black leading-tight tracking-[-0.033em] lg:text-5xl drop-shadow-md">
+                    {eventDisplay.name}
+                  </h1>
+                  {userReview && (
+                    <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/30">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="text-sm font-bold text-white">You rated {userReview.rating}/5</span>
+                    </div>
+                  )}
+                </div>
                 <div className="flex flex-wrap gap-4 items-center text-white/90">
                   <div className="flex items-center gap-1">
                     <MapPin className="text-[20px]" />
-                    <span className="text-sm lg:text-base font-medium">{event.location}</span>
+                    <span className="text-sm lg:text-base font-medium">{eventDisplay.location}</span>
                   </div>
                   <div className="hidden h-1 w-1 rounded-full bg-white lg:block"></div>
                   <div className="flex items-center gap-1">
                     <Calendar className="text-[20px]" />
-                    <span className="text-sm lg:text-base font-medium">{event.date}</span>
+                    <span className="text-sm lg:text-base font-medium">{eventDisplay.date}</span>
                   </div>
                 </div>
               </div>
@@ -232,6 +306,17 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                 >
                   <span className="truncate">View Floor Plan</span>
                 </Button>
+                {user && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="flex min-w-[84px] h-12 px-6 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-base font-bold hover:bg-white/20"
+                  >
+                    <Link href={`/events/${eventId}/rate`}>
+                      <span className="truncate">{userReview ? "Edit Review" : "Write a Review"}</span>
+                    </Link>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -460,17 +545,34 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                 <div>
                   <div className="flex items-center justify-between mt-4 mb-4">
                     <h3 className="text-xl font-bold text-foreground">Detailed Reviews (2025)</h3>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">Sort by:</span>
-                      <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="bg-transparent border-none text-sm font-bold text-foreground focus:ring-0 cursor-pointer"
-                      >
-                        <option>Most Relevant</option>
-                        <option>Highest Rated</option>
-                        <option>Lowest Rated</option>
-                      </select>
+                    <div className="flex items-center gap-4">
+                      {user && (
+                        <>
+                          {userReview && (
+                            <div className="flex items-center gap-2 bg-primary/10 text-primary px-3 py-1.5 rounded-full border border-primary/20">
+                              <Star className="w-4 h-4 fill-primary text-primary" />
+                              <span className="text-sm font-semibold">You rated {userReview.rating}/5</span>
+                            </div>
+                          )}
+                          <Button asChild variant="default" size="sm">
+                            <Link href={`/events/${eventId}/rate`}>
+                              {userReview ? "Edit Review" : "Write a Review"}
+                            </Link>
+                          </Button>
+                        </>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Sort by:</span>
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value)}
+                          className="bg-transparent border-none text-sm font-bold text-foreground focus:ring-0 cursor-pointer"
+                        >
+                          <option>Most Relevant</option>
+                          <option>Highest Rated</option>
+                          <option>Lowest Rated</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
@@ -596,11 +698,11 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                   <div className="flex items-center gap-3 mb-4">
                     <div
                       className="size-14 rounded-full bg-cover bg-center border border-border"
-                      style={{ backgroundImage: `url('${event.organizer.avatar}')` }}
+                      style={{ backgroundImage: `url('${eventDisplay.organizer.avatar}')` }}
                     />
                     <div>
-                      <p className="font-bold text-foreground">{event.organizer.name}</p>
-                      <p className="text-sm text-muted-foreground">{event.organizer.role}</p>
+                      <p className="font-bold text-foreground">{eventDisplay.organizer.name}</p>
+                      <p className="text-sm text-muted-foreground">{eventDisplay.organizer.role}</p>
                     </div>
                   </div>
                   <Button
@@ -615,11 +717,11 @@ export default function EventDetailPage({ params }: { params: { id: string } }) 
                 <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
                   <div
                     className="h-32 w-full bg-cover bg-center"
-                    style={{ backgroundImage: `url('${event.venue.mapImage}')` }}
+                    style={{ backgroundImage: `url('${eventDisplay.venue.mapImage}')` }}
                   />
                   <div className="p-6">
-                    <h4 className="font-bold text-foreground mb-1">{event.venue.name}</h4>
-                    <p className="text-sm text-muted-foreground mb-4">{event.venue.address}</p>
+                    <h4 className="font-bold text-foreground mb-1">{eventDisplay.venue.name}</h4>
+                    <p className="text-sm text-muted-foreground mb-4">{eventDisplay.venue.address}</p>
                     <a
                       href="#"
                       className="text-primary text-sm font-bold flex items-center gap-1 hover:underline"

@@ -361,9 +361,17 @@ export default function EventsPage() {
                     {/* Event Content */}
                     <div className="p-6 space-y-4">
                       <div>
-                        {event.category && (
-                          <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">{event.category}</p>
-                        )}
+                        <div className="flex items-center gap-2 mb-2">
+                          {event.category && (
+                            <p className="text-xs font-semibold text-primary uppercase tracking-wider">{event.category}</p>
+                          )}
+                          {currentStatus === 'rated' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                              <Star className="w-3 h-3 fill-current" />
+                              Rated
+                            </span>
+                          )}
+                        </div>
                         <Link
                           href={`/events/${event.slug || event.id}`}
                           className="text-lg font-bold text-foreground group-hover:text-primary transition block"
@@ -399,7 +407,7 @@ export default function EventsPage() {
                       {/* Status Actions */}
                       {user && (
                         <div className="flex items-center gap-2 pt-2 border-t border-border">
-                          <div className="flex items-center gap-1 flex-1">
+                          <div className="flex items-center gap-1 flex-1 flex-wrap">
                             <Button
                               variant="ghost"
                               size="sm"
@@ -407,10 +415,10 @@ export default function EventsPage() {
                                 e.preventDefault()
                                 updateEventStatus(event.id, 'want_to_go')
                               }}
-                              className={`h-8 px-2 ${currentStatus === 'want_to_go' ? 'bg-primary/10 text-primary' : ''}`}
-                              title="Want to go"
+                              className={`h-8 px-3 ${currentStatus === 'want_to_go' ? 'bg-primary/10 text-primary' : ''}`}
                             >
-                              <Heart className="w-4 h-4" />
+                              <Heart className="w-4 h-4 mr-1.5" />
+                              <span className="text-xs">Want to go</span>
                             </Button>
                             <Button
                               variant="ghost"
@@ -419,10 +427,10 @@ export default function EventsPage() {
                                 e.preventDefault()
                                 updateEventStatus(event.id, 'going')
                               }}
-                              className={`h-8 px-2 ${currentStatus === 'going' ? 'bg-primary/10 text-primary' : ''}`}
-                              title="Going"
+                              className={`h-8 px-3 ${currentStatus === 'going' ? 'bg-primary/10 text-primary' : ''}`}
                             >
-                              <Bookmark className="w-4 h-4" />
+                              <Bookmark className="w-4 h-4 mr-1.5" />
+                              <span className="text-xs">Going</span>
                             </Button>
                             <Button
                               variant="ghost"
@@ -431,22 +439,10 @@ export default function EventsPage() {
                                 e.preventDefault()
                                 updateEventStatus(event.id, 'went')
                               }}
-                              className={`h-8 px-2 ${currentStatus === 'went' ? 'bg-primary/10 text-primary' : ''}`}
-                              title="Went"
+                              className={`h-8 px-3 ${currentStatus === 'went' ? 'bg-primary/10 text-primary' : ''}`}
                             >
-                              <CheckCircle className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.preventDefault()
-                                updateEventStatus(event.id, 'rated')
-                              }}
-                              className={`h-8 px-2 ${currentStatus === 'rated' ? 'bg-primary/10 text-primary' : ''}`}
-                              title="Rated"
-                            >
-                              <Star className="w-4 h-4" />
+                              <CheckCircle className="w-4 h-4 mr-1.5" />
+                              <span className="text-xs">Went</span>
                             </Button>
                             {currentStatus && (
                               <Button
@@ -456,10 +452,10 @@ export default function EventsPage() {
                                   e.preventDefault()
                                   updateEventStatus(event.id, null)
                                 }}
-                                className="h-8 px-2 text-muted-foreground hover:text-destructive"
-                                title="Remove status"
+                                className="h-8 px-3 text-muted-foreground hover:text-destructive"
                               >
-                                <XCircle className="w-4 h-4" />
+                                <XCircle className="w-4 h-4 mr-1.5" />
+                                <span className="text-xs">Remove</span>
                               </Button>
                             )}
                           </div>

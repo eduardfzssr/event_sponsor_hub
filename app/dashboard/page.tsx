@@ -461,52 +461,52 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 border border-border rounded-lg p-1">
+                        <div className="flex items-center gap-1 border border-border rounded-lg p-1 flex-wrap">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => updateEventStatus(event.id, 'want_to_go')}
                             className={`h-8 px-3 ${currentStatus === 'want_to_go' ? 'bg-primary/10 text-primary' : ''}`}
-                            title="Want to go"
                           >
-                            <Heart className="w-4 h-4" />
+                            <Heart className="w-4 h-4 mr-1.5" />
+                            <span className="text-xs">Want to go</span>
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => updateEventStatus(event.id, 'going')}
                             className={`h-8 px-3 ${currentStatus === 'going' ? 'bg-primary/10 text-primary' : ''}`}
-                            title="Going"
                           >
-                            <Bookmark className="w-4 h-4" />
+                            <Bookmark className="w-4 h-4 mr-1.5" />
+                            <span className="text-xs">Going</span>
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => updateEventStatus(event.id, 'went')}
                             className={`h-8 px-3 ${currentStatus === 'went' ? 'bg-primary/10 text-primary' : ''}`}
-                            title="Went"
                           >
-                            <CheckCircle className="w-4 h-4" />
+                            <CheckCircle className="w-4 h-4 mr-1.5" />
+                            <span className="text-xs">Went</span>
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => updateEventStatus(event.id, 'rated')}
                             className={`h-8 px-3 ${currentStatus === 'rated' ? 'bg-primary/10 text-primary' : ''}`}
-                            title="Rated"
                           >
-                            <Star className="w-4 h-4" />
+                            <Star className="w-4 h-4 mr-1.5" />
+                            <span className="text-xs">Rated</span>
                           </Button>
                           {currentStatus && (
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => updateEventStatus(event.id, null)}
-                              className="h-8 px-2 text-muted-foreground hover:text-destructive"
-                              title="Remove status"
+                              className="h-8 px-3 text-muted-foreground hover:text-destructive"
                             >
-                              <XCircle className="w-4 h-4" />
+                              <XCircle className="w-4 h-4 mr-1.5" />
+                              <span className="text-xs">Remove</span>
                             </Button>
                           )}
                         </div>
@@ -701,8 +701,9 @@ export default function DashboardPage() {
                         )}
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon">
-                      <Edit className="w-4 h-4" />
+                    <Button variant="ghost" size="sm">
+                      <Edit className="w-4 h-4 mr-2" />
+                      <span className="text-xs">Edit</span>
                     </Button>
                   </div>
                 ))

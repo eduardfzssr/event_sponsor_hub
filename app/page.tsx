@@ -7,7 +7,8 @@ import {
   Users, 
   Eye, 
   Handshake, 
-  ArrowRight 
+  ArrowRight,
+  BarChart3
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,7 +21,7 @@ export default function LandingPage() {
         <div className="px-4 md:px-10 py-3 max-w-[1440px] mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 md:gap-4 text-foreground cursor-pointer group">
             <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-              <CheckCircle2 className="w-5 h-5" />
+              <BarChart3 className="w-5 h-5" />
             </div>
             <h2 className="text-lg font-bold leading-tight tracking-[-0.015em] hidden sm:block">EventSponsorHub</h2>
           </Link>

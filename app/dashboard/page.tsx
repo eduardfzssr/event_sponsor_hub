@@ -20,13 +20,6 @@ interface Review {
   created_at: string
 }
 
-interface FeaturedEvent {
-  id: string
-  name: string
-  slug: string
-  start_date: string | null
-}
-
 interface Event {
   id: string
   name: string
@@ -64,7 +57,6 @@ export default function DashboardPage() {
     averageRating: 0,
     totalEventsSponsored: 0,
   })
-  const [featuredEvent, setFeaturedEvent] = useState<FeaturedEvent | null>(null)
   const [dataLoading, setDataLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<Event[]>([])
@@ -85,7 +77,7 @@ export default function DashboardPage() {
         email: currentUser.email,
       })
       setLoading(false)
-      
+
       // Fetch user data from database
       await fetchDashboardData(currentUser.userId)
     }
@@ -95,7 +87,7 @@ export default function DashboardPage() {
   async function fetchDashboardData(userId: string) {
     try {
       const supabase = createClient()
-      
+
       // Fetch user's reviews with event information
       const { data: reviews, error: reviewsError } = await supabase
         .from('reviews')
@@ -144,23 +136,6 @@ export default function DashboardPage() {
         })
       }
 
-      // Fetch featured event
-      const { data: featured, error: featuredError } = await supabase
-        .from('events')
-        .select('id, name, slug, start_date')
-        .eq('is_featured', true)
-        .eq('status', 'upcoming')
-        .order('start_date', { ascending: true })
-        .limit(1)
-        .single()
-
-      if (featuredError) {
-        // No featured event is fine, just log it
-        console.log('No featured event found:', featuredError)
-      } else {
-        setFeaturedEvent(featured)
-      }
-
       // Fetch user's event statuses
       const { data: statuses, error: statusesError } = await supabase
         .from('user_event_statuses')
@@ -188,7 +163,7 @@ export default function DashboardPage() {
   async function fetchEventsToRate(userId: string) {
     try {
       const supabase = createClient()
-      
+
       // Get event IDs that user has status 'want_to_go' or 'went' for
       const { data: statuses, error: statusesError } = await supabase
         .from('user_event_statuses')
@@ -214,7 +189,7 @@ export default function DashboardPage() {
       }
 
       const reviewedEventIds = new Set((reviewedEvents || []).map((r: any) => r.event_id))
-      
+
       // Filter to only events that haven't been reviewed
       const eventsToRateIds = statuses
         .filter((s: any) => !reviewedEventIds.has(s.event_id))
@@ -396,10 +371,6 @@ export default function DashboardPage() {
                 <Search className="w-4 h-4 mr-2" />
                 Search Events
               </Button>
-              <Button onClick={() => setShowNewReview(!showNewReview)} className="bg-primary hover:bg-primary/90">
-                <Plus className="w-4 h-4 mr-2" />
-                Write Review
-              </Button>
             </div>
           </div>
         </div>
@@ -551,26 +522,6 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-
-            {/* Featured Event */}
-            {featuredEvent && (
-              <div className="bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 rounded-lg p-6 space-y-4">
-                <h3 className="font-semibold text-foreground">Featured Event</h3>
-                <div className="space-y-2">
-                  <p className="font-medium text-foreground">{featuredEvent.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {featuredEvent.start_date
-                      ? `Starting ${new Date(featuredEvent.start_date).toLocaleDateString()}`
-                      : 'Call for Sponsors Opening Soon'}
-                  </p>
-                  <Button variant="outline" className="w-full mt-4 bg-transparent" asChild>
-                    <Link href={`/events/${featuredEvent.slug || featuredEvent.id}`}>
-                      Learn More
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Right Column - Reviews */}
@@ -607,11 +558,10 @@ export default function DashboardPage() {
                             </span>
                           )}
                           <span
-                            className={`text-xs px-2 py-1 rounded font-medium ${
-                              event.user_status === 'want_to_go'
+                            className={`text-xs px-2 py-1 rounded font-medium ${event.user_status === 'want_to_go'
                                 ? 'bg-blue-100 text-blue-700'
                                 : 'bg-green-100 text-green-700'
-                            }`}
+                              }`}
                           >
                             {event.user_status === 'want_to_go' ? 'Want to go' : 'Went'}
                           </span>
@@ -631,7 +581,7 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <Button
-                        onClick={() => router.push(`/events/${event.slug || event.id}?action=rate`)}
+                        onClick={() => router.push(`/events/${event.id}/rate`)}
                         className="ml-4"
                       >
                         <Star className="w-4 h-4 mr-2" />
@@ -645,18 +595,7 @@ export default function DashboardPage() {
 
             {/* Filter Tabs */}
             <div className="flex gap-2 border-b border-border">
-              {["All", "Published", "Draft", "Pending"].map((tab) => (
-                <button
-                  key={tab}
-                  className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
-                    tab === "All"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
+              <h2>Your Past Events</h2>
             </div>
 
             {/* Reviews List */}
@@ -671,13 +610,12 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-3">
                         <h3 className="font-semibold text-foreground">{review.eventName}</h3>
                         <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            review.status === "published"
+                          className={`px-2 py-1 rounded text-xs font-medium ${review.status === "published"
                               ? "bg-green-100 text-green-700"
                               : review.status === "draft"
                                 ? "bg-gray-100 text-gray-700"
                                 : "bg-yellow-100 text-yellow-700"
-                          }`}
+                            }`}
                         >
                           {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
                         </span>

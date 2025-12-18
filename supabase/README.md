@@ -33,8 +33,10 @@ You can run the migration in one of two ways:
 
 1. Go to your Supabase project dashboard
 2. Navigate to SQL Editor
-3. Copy the contents of `supabase/migrations/001_initial_schema.sql`
-4. Paste and run it in the SQL Editor
+3. Copy and run the migrations in order:
+   - First: `supabase/migrations/001_initial_schema.sql`
+   - Then: `supabase/migrations/002_auto_create_profile.sql`
+4. Paste and run each migration in the SQL Editor
 
 #### Option B: Using Supabase CLI
 
@@ -86,6 +88,7 @@ All tables have Row Level Security enabled with policies that:
 
 The schema includes several helpful functions:
 
+- `handle_new_user()` - Automatically creates a profile when a new user signs up (bypasses RLS)
 - `calculate_event_avg_roi(event_uuid)` - Calculates average ROI for an event
 - `check_review_limit(user_uuid)` - Checks if user can write more reviews based on subscription tier
 - `update_review_helpful_count()` - Automatically updates helpful_count when votes change

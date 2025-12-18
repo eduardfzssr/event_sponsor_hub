@@ -37,12 +37,12 @@ export default function LandingPage() {
           </div>
           <div className="flex gap-2 sm:gap-4">
             <Button variant="outline" size="default" className="h-9" asChild>
-              <Link href="/dashboard">
+              <Link href="/signin">
                 <span className="truncate">Log In</span>
               </Link>
             </Button>
             <Button size="default" className="h-9" asChild>
-              <Link href="/dashboard">
+              <Link href="/signup">
                 <span className="truncate">Get Started</span>
               </Link>
             </Button>
@@ -369,7 +369,7 @@ export default function LandingPage() {
             <p className="text-lg text-muted-foreground">Join 10,000+ marketers making data-driven sponsorship decisions.</p>
             <div className="flex gap-4 mt-4">
               <Button size="lg" className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-bold text-lg hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20" asChild>
-                <Link href="/dashboard">Get Started for Free</Link>
+                <Link href="/signup">Get Started for Free</Link>
               </Button>
               <Button variant="outline" size="lg" className="px-8 py-3 bg-card dark:bg-slate-800 text-foreground border border-border rounded-lg font-bold text-lg hover:bg-muted dark:hover:bg-slate-700 transition-colors" asChild>
                 <Link href="/events">View Demo</Link>

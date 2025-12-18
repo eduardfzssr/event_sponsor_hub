@@ -406,7 +406,7 @@ export default function DashboardPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
                           <Link
-                            href={`/events/${event.slug || event.id}`}
+                            href={`/events/${event.id}`}
                             className="font-semibold text-foreground hover:text-primary transition"
                           >
                             {event.name}
@@ -547,7 +547,7 @@ export default function DashboardPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
                           <Link
-                            href={`/events/${event.slug || event.id}`}
+                            href={`/events/${event.id}`}
                             className="font-semibold text-foreground hover:text-primary transition"
                           >
                             {event.name}
